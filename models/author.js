@@ -3,7 +3,7 @@ const schema= mongoose.Schema;
 
 const author= new schema(
 {
-first_name: {type:String,required:true, maxLengrth:100},
+first_name: {type:String,required:true, maxLength:100},
 last_name:{type:String,required:true,maxLength:100},
 date_of_birth:{type:Date},
 date_of_death:{type:Date},
