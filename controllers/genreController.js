@@ -1,11 +1,51 @@
+const async  = require("async");
 const Genre = require("../models/genre");
-
+const Book=require("../models/book");
+const mongoose = require("mongoose");
 
 exports.genre_list = (req, res) => {
-  res.send("NOT IMPLEMENTED: Genre list");
+  Genre.find()
+  .sort([['sort','ascending']])
+  .exec((err,reslt)=>{
+    if(err){
+      return next(err);
+    }else{
+      res.setHeader('Content-Type','text/JSON');
+      res.status(200).send(reslt);
+      res.end();
+    }
+  })
 };
 exports.genre_detail = (req, res) => {
-  res.send(`NOT IMPLEMENTED: Genre detail: ${req.params.id}`);
+  const id = mongoose.Types.ObjectId(req.params.id);
+  async.parallel(
+    {
+      genre(callback){
+        Genre.findById(id)
+        .exec(callback);
+      },
+      genre_book(callback){
+        Book.find({id})
+        .exec(callback);
+      }
+
+
+    },
+    (err,reslt)=>{
+      if(err){
+        return next(err);
+      }else{
+        if(reslt.genre==null){
+          res.status(404);
+          return next(new Error('Genre Not Found'));
+        }else{
+          res.setHeader('Content-type','text/JSON');
+          res.status(200).send(reslt);
+          res.end();
+        }
+      }
+    }
+  )
 };
 exports.genre_create_get = (req, res) => {
   res.send("NOT IMPLEMENTED: Genre create GET");

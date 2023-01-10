@@ -2,7 +2,7 @@ const Book = require("../models/book");
 const Author= require("../models/author");
 const Bookinstance= require("../models/bookinstance");
 const Genre=require("../models/genre");
-
+const mongoose=require("mongoose");
 const async=require("async");
 exports.index = (req, res) => {
     // will reture count of collection entry.
@@ -47,7 +47,35 @@ exports.book_list = (req, res) => {
 
 
 exports.book_detail = (req, res) => {
-  res.send(`NOT IMPLEMENTED: Book detail: ${req.params.id}`);
+  const id= mongoose.Types.ObjectId(req.params.id);
+  async.parallel({
+    detail(callback){
+      Book.findById(id)
+      .populate('author')
+      .populate('genre')
+      .exec(callback);
+    },
+    instance(callback){
+      Bookinstance.find({book:id})
+      .exec(callback)
+    }
+
+  },(err,reslt)=>{
+    if(err){
+      return next(err);
+    }else{
+      if(reslt==null){
+        res.status(404)
+        res.end();
+        
+      }else{
+        res.setHeader('Content-Type','text/JSON');
+        res.status(200).send(reslt);
+        res.end();
+      }
+    }
+  })
+  
 };
 
 
