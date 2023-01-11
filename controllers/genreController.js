@@ -2,6 +2,11 @@ const async  = require("async");
 const Genre = require("../models/genre");
 const Book=require("../models/book");
 const mongoose = require("mongoose");
+const genre = require("../models/genre");
+const validator= require("express-validator");
+
+const check= validator.body;
+const validatorResult= validator.validationResult;
 
 exports.genre_list = (req, res) => {
   Genre.find()
@@ -25,7 +30,7 @@ exports.genre_detail = (req, res) => {
         .exec(callback);
       },
       genre_book(callback){
-        Book.find({id})
+        Book.find({genre:id})
         .exec(callback);
       }
 
@@ -47,12 +52,45 @@ exports.genre_detail = (req, res) => {
     }
   )
 };
-exports.genre_create_get = (req, res) => {
-  res.send("NOT IMPLEMENTED: Genre create GET");
-};
-exports.genre_create_post = (req, res) => {
-  res.send("NOT IMPLEMENTED: Genre create POST");
-};
+
+exports.genre_create_post = [
+  check("name","Genre name Required").trim().isLength({min:1}).escape(),
+
+  (req, res,next) => {
+    // console.log(req.body)
+      const errors= validatorResult(req);
+      const obj=new Genre({name:req.body.name});
+      if(!errors.isEmpty()){
+        console.log(errors);  
+        res.status(400);
+        res.end();
+
+      }else{
+        Genre.findOne({name:req.body.name})
+        .exec((err,found)=>{
+          if(err){
+            return next(err);
+          }
+          if(found){
+            // genre already present provide it url.
+            res.send(found.url);
+            res.end()
+          }else{
+            obj.save((err)=>{
+              if(err){
+                return next(err);
+              }
+              res.setHeader("Content-Type","text/JSON");
+              res.send("{status:1,'message':'Genre Created Successfully'  ");
+              res.end();
+            })
+
+          }
+
+        })
+      }
+  }
+]
 exports.genre_delete_get = (req, res) => {
   res.send("NOT IMPLEMENTED: Genre delete GET");
 };

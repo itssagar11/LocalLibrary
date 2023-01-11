@@ -4,6 +4,10 @@ const Bookinstance= require("../models/bookinstance");
 const Genre=require("../models/genre");
 const mongoose=require("mongoose");
 const async=require("async");
+const validation= require("express-validator");
+const check=validation.body;
+const validatorResult=validation.validationResult;
+
 exports.index = (req, res) => {
     // will reture count of collection entry.
    async.parallel(
@@ -79,15 +83,60 @@ exports.book_detail = (req, res) => {
 };
 
 
-exports.book_create_get = (req, res) => {
-  res.send("NOT IMPLEMENTED: Book create GET");
-};
 
+exports.book_create_post = [
 
-exports.book_create_post = (req, res) => {
-  res.send("NOT IMPLEMENTED: Book create POST");
-};
+  check("title", "Title must not be empty.")
+  .trim()
+  .isLength({ min: 1 })
+  .escape(),
+check("author", "Author must not be empty.")
+  .trim()
+  .isLength({ min: 1 })
+  .escape(),
+check("summary", "Summary must not be empty.")
+  .trim()
+  .isLength({ min: 1 })
+  .escape(),
+check("isbn", "ISBN must not be empty").trim().isLength({ min: 1 }).escape(),
+check("genre.*").escape(),
+(req,res,next)=>{
+  // Convert the genre to an array.
+  console.log(req.body.genre);
+  if(!Array.isArray(req.body.genre)){
+  
+   typeof req.body.genre=="undefined"?[]:[req.body.genre];
+  }
+  next();
+},
+(req, res, next) => {
+ 
+  const errors = validatorResult(req);
+  const book = new Book({
+    title: req.body.title,
+    author: req.body.author,
+    summary: req.body.summary,
+    isbn: req.body.isbn,
+    genre: req.body.genre,
+  });
 
+  if (!errors.isEmpty()) {
+    console.log(errors);  
+    res.status(400);
+    res.setHeader("Content-Type","text/JSON")
+   
+    return;
+  }
+  book.save((err) => {
+    if (err) {
+      return next(err);
+    }
+
+    res.end();
+  });
+},
+
+]
 
 exports.book_delete_get = (req, res) => {
   res.send("NOT IMPLEMENTED: Book delete GET");
