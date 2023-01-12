@@ -75,18 +75,55 @@ exports.bookinstance_create_post = [
     });
   },
 ];
-exports.bookinstance_delete_get = (req, res) => {
-  res.send("NOT IMPLEMENTED: BookInstance delete GET");
-};
-exports.bookinstance_delete_post = (req, res) => {
-  res.send("NOT IMPLEMENTED: BookInstance delete POST");
-};
-exports.bookinstance_update_get = (req, res) => {
-  res.send("NOT IMPLEMENTED: BookInstance update GET");
+
+exports.bookinstance_delete_post =  (req, res,next) => {
+  const id= mongoose.Types.ObjectId(req.params.id);
+  BookInstance.find({book:id})
+  .exec((err)=>{
+    if(err){
+      return next(err);
+    }
+    
+    res.setHeader("Content-Type","text/JSON");
+    res.status(200).send({status:1,message:'Deleted Successfully'});
+    res.end();
+  })
+     
 };
 
-exports.bookinstance_update_post = (req, res) => {
-  res.send("NOT IMPLEMENTED: BookInstance update POST");
-};
+exports.bookinstance_update_post =[
+  body("book", "Book must be specified").trim().isLength({ min: 1 }).escape(),
+  body("imprint", "Imprint must be specified")
+    .trim()
+    .isLength({ min: 1 })
+    .escape(),
+  body("status").escape(),
+  body("due_back", "Invalid date")
+    .optional({ checkFalsy: true })
+    .isISO8601()
+    .toDate(),
+  (req, res, next) => {
+    const errors = validationResult(req);
 
+    const obj={
+      book: req.body.book,
+      imprint: req.body.imprint,
+      status: req.body.status,
+      due_back: req.body.due_back,
+    };
+
+    if (!errors.isEmpty()) {
+      console.log(errors);  
+      res.status(400);
+      res.end();
+    }
+    const id=mongoose.Types.ObjectId(req.params.id)
+    BookInstance.findByIdAndUpdate(id,{$set:obj},(err,reslt) => {
+      if (err) {
+        return next(err);
+      }
+      res.redirect(reslt.url);
+    });
+  },
+];
 

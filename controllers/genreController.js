@@ -91,15 +91,64 @@ exports.genre_create_post = [
       }
   }
 ]
-exports.genre_delete_get = (req, res) => {
-  res.send("NOT IMPLEMENTED: Genre delete GET");
+
+exports.genre_delete_post =  (req, res,next) => {
+  const id= mongoose.Types.ObjectId(req.params.id);
+  async.parallel({
+      genres(callback){
+          Genre.findById(id)
+          .exec(callback);
+      },
+      genre_associated_books(callback){
+          Book.find({genre:id})
+          .exec(callback)
+      }
+  },(err,reslt)=>{
+
+      if(err){
+          return next(err)
+      }
+      if(reslt.genres==null){
+          res.setHeader("Content-Type","text/JSON");
+          res.status(404).send({status:0,message:'Not Found'});
+          res.end();
+      }else if(reslt.genre_associated_books.length>0){
+          res.setHeader("Content-Type","text/JSON");
+          res.status(200).send(reslt.genre_associated_books);
+          res.end();
+      }else{
+          Genre.findByIdAndRemove(id,(err)=>{
+              res.setHeader("Content-Type","text/JSON");
+              res.status(200).send({status:1,message:'Deleted Successfully'});
+              res.end();
+          })
+      }
+  })
 };
-exports.genre_delete_post = (req, res) => {
-  res.send("NOT IMPLEMENTED: Genre delete POST");
-};
-exports.genre_update_get = (req, res) => {
-  res.send("NOT IMPLEMENTED: Genre update GET");
-};
-exports.genre_update_post = (req, res) => {
-  res.send("NOT IMPLEMENTED: Genre update POST");
-};
+
+exports.genre_update_post = [
+  check("name","Genre name Required").trim().isLength({min:1}).escape(),
+
+  (req, res,next) => {
+    // console.log(req.body)
+      const errors= validatorResult(req);
+      const obj={name:req.body.name};
+      if(!errors.isEmpty()){
+        console.log(errors);  
+        res.status(400);
+        res.end();
+
+      }else{
+        const id= mongoose.Types.ObjectId(req.params.id);
+        Genre.findByIdAndUpdate(id,{ $set: obj},(err,reslt)=>{
+          if(err){
+            console.log(err);
+            return next(err);
+          }else{
+            console.log(reslt.url)
+            res.redirect(reslt.url);
+          }
+        })
+      }
+  }
+]

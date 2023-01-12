@@ -138,21 +138,92 @@ check("genre.*").escape(),
 
 ]
 
-exports.book_delete_get = (req, res) => {
-  res.send("NOT IMPLEMENTED: Book delete GET");
+exports.book_delete_post = (req, res,next) => {
+  const id= mongoose.Types.ObjectId(req.params.id);
+  async.parallel({
+      book(callback){
+          Book.findById(id)
+          .exec(callback);
+      },
+      book_instance(callback){
+          Bookinstance.find({book:id})
+          .exec(callback)
+      }
+  },(err,reslt)=>{
+
+      if(err){
+          return next(err)
+      }
+      if(reslt.book==null){
+          res.setHeader("Content-Type","text/JSON");
+          res.status(404).send("Book Not Found");
+          res.end();
+      }else if(reslt.book_instance.length>0){
+          res.setHeader("Content-Type","text/JSON");
+          res.status(200).send({message:'cannot delete Book '}+reslt.book_instance);
+          res.end();
+      }else{
+          Book.findByIdAndRemove(id,(err)=>{
+              res.setHeader("Content-Type","text/JSON");
+              res.status(200).send("Book Deleted");
+              res.end();
+          })
+      }
+  })
 };
 
 
-exports.book_delete_post = (req, res) => {
-  res.send("NOT IMPLEMENTED: Book delete POST");
-};
+exports.book_update_post = [
 
+  check("title", "Title must not be empty.")
+  .trim()
+  .isLength({ min: 1 })
+  .escape(),
+check("author", "Author must not be empty.")
+  .trim()
+  .isLength({ min: 1 })
+  .escape(),
+check("summary", "Summary must not be empty.")
+  .trim()
+  .isLength({ min: 1 })
+  .escape(),
+check("isbn", "ISBN must not be empty").trim().isLength({ min: 1 }).escape(),
+check("genre.*").escape(),
+(req,res,next)=>{
+  // Convert the genre to an array.
+  console.log(req.body.genre);
+  if(!Array.isArray(req.body.genre)){
+  
+   typeof req.body.genre=="undefined"?[]:[req.body.genre];
+  }
+  next();
+},
+(req, res, next) => {
+ 
+  const errors = validatorResult(req);
+  const obj={
+    title: req.body.title,
+    author: req.body.author,
+    summary: req.body.summary,
+    isbn: req.body.isbn,
+    genre: req.body.genre,
+  };
 
-exports.book_update_get = (req, res) => {
-  res.send("NOT IMPLEMENTED: Book update GET");
-};
+  if (!errors.isEmpty()) {
+    console.log(errors);  
+    res.status(400);
+    res.setHeader("Content-Type","text/JSON")
+   
+    return;
+  }
+  const id=mongoose.Types.ObjectId(req.params.id);
+  Book.findByIdAndUpdate(id,{ $set: obj},{},(err,rslt)=>{
+    if(err){
+      return next(err);
+    }else{
+      res.redirect(rslt.url);
+    }
+  })
+},
 
-
-exports.book_update_post = (req, res) => {
-  res.send("NOT IMPLEMENTED: Book update POST");
-};
+]
