@@ -4,15 +4,13 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var mongoose= require("mongoose");
-const mongoDB="mongodb+srv://itssagar11:0135india@cluster0.4yxhpzs.mongodb.net/library?retryWrites=true&w=majority://localhost:27017/mongodb+srv://itssagar11:0135Indi@@cluster0.mdd4cvd.mongodb.net/?libraryretryWrites=true&w=majority";
+const mongoDB="mongodb+srv://itssagar11:0135india@cluster0.4yxhpzs.mongodb.net/library?retryWrites=true&w=majority://localhost:27017/mongodb+srv://itssagar11:0135Indi@@cluster0.mdd4cvd.mongodb.net/?libraryretryWrites=true";
 
-mongoose.connect(mongoDB,{ useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(mongoDB,{ useNewUrlParser: true, w: "majority" })
 .then((res)=>{
   console.log("connected to database")
 })
 .catch((err)=>{console.log(err)});
-
-
 
 
 var indexRouter = require('./routes/index');

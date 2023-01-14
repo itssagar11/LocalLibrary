@@ -27,9 +27,11 @@ userSchema.pre('save',function(next){
                     next();
                 })
     })
-})
-userSchema.methods.verifyPassword= (inputpass)=>{
+});
+
+
+userSchema.methods.hashPassword= function(inputpass){
    return  bcrypt.compare(inputpass,this.password);
 }
 
-module.exports= mongoose.model("User",userSchema);
+module.exports= mongoose.model("user",userSchema);
