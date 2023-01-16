@@ -1,3 +1,4 @@
+require('dotenv').config()
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
@@ -5,6 +6,13 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var mongoose= require("mongoose");
 const mongoDB="mongodb+srv://itssagar11:0135india@cluster0.4yxhpzs.mongodb.net/library?retryWrites=true&w=majority://localhost:27017/mongodb+srv://itssagar11:0135Indi@@cluster0.mdd4cvd.mongodb.net/?libraryretryWrites=true";
+const passport=require("passport");
+const JWTStrategy=require("passport-jwt").Strategy; 
+const {ExtractJwt}=require("passport-jwt");
+const auth= require("./routes/auth")
+
+
+
 
 mongoose.connect(mongoDB,{ useNewUrlParser: true, w: "majority" })
 .then((res)=>{
@@ -31,6 +39,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', indexRouter);
  
 app.use("/catalog",catalogRouter);
+app.use('/auth',auth);
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));

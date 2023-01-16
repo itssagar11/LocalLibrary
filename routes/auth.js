@@ -1,16 +1,50 @@
 
 require('dotenv').config()
+
+var express = require('express');
+var router = express.Router();
+
 const mongoose= require("mongoose");
 const user= require("../models/user");
 const validation= require("express-validator");
 const async=require("async");
 const bcrypt=require("bcrypt");
 const jwt=require("jsonwebtoken")
-const cookie=require("cookie")
+const passport=require("passport");
+const JWTStrategy=require("passport-jwt").Strategy; 
+const {ExtractJwt}=require("passport-jwt");
+const GoogleStrategy=require("passport-google-oauth20").Strategy;
+const profileid="";
+
 const check=validation.body;
 const validateResult= validation.validationResult;
 
-exports.signup=  [
+passport.use(new JWTStrategy({
+    jwtFromRequest:ExtractJwt.fromAuthHeaderAsBearerToken(),
+    secretOrKey:process.env.SECRET_KEY,
+  },(jwtPayload,cb)=>{
+  
+    return cb(null, jwtPayload);
+  }));
+  passport.use(new GoogleStrategy({
+    clientID: "476135258480-5cgk4es5klc1pe5el26savevb0hj568l.apps.googleusercontent.com",
+    clientSecret: "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",
+    callbackURL: "http://localhost:3000/auth/google/callback"
+  },
+  function(accessToken, refreshToken, profile, cb) {
+   
+    console.log("lll");
+    User.findOne({ email: profile.email }, function (err, user) {
+        if(user)
+      return cb(err, user);
+      else
+        return cb(new Error("Invalid user",null));
+    });
+  }
+));
+  
+
+router.post("/signup", [
     check('first_name','First Name Required').trim().isLength({min:1}).escape(),
     check('last_name','Last Name Required').trim().isLength({min:1}).escape(),
     check('username','Username Required').trim().isLength({min:1}).escape(),
@@ -72,9 +106,9 @@ exports.signup=  [
 
 
 
-];
+]);
 
-exports.signin= [
+router.post("/signin" ,[
     check('username','Username Required').trim().isLength({min:1}).escape(),
     check('password','Password  Required').trim().escape(),
     async (req,res,next)=>{
@@ -116,21 +150,31 @@ exports.signin= [
            
     
     }
-]
+])
+router.get('/google',passport.authenticate('google', { scope: ['profile'] }))
 
-exports.VerifyRequest= async(req,res,next)=>{
-    const token= req.body.token || req.query.token || req.header['x-access-token'];
-    if(!token){
-        res.status(403).send("Invalid authentication");
+
+
+router.get("/google/callback",(req,res,next)=>{
+console.log("sdf");
+passport.authenticate('google', { failureRedirect: '/' }),
+async (req,res)=>{
+    const payload={
+        sub:u.id,
+        iat:Date.now()
     }
-   jwt.verify(token,process.env.SECRET_KEY,(err,decoded)=>{
-    if(err){
-        res.status(403).send("Authentication Required");
-        return;
-    }
-    next();
-   });
-    
+    const token=  await jwt.sign(payload,process.env.SECRET_KEY,{expiresIn: "2h",});
+    // res.setHeader("Set-Cookie",cookie.serialize('access-token',token,{
+    //     // httpOnly:true // disable for testing
+    //     sameSite:'strict',
+    //     maxAge:180000
+    // })) //vulnulrable 
+    return res.status(200).send({
+        message:"Successfully Login",
+        user:u.username,
+        token
+    })
 }
+})
 
-
+module.exports=router;
