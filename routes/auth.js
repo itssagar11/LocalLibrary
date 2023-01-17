@@ -14,7 +14,7 @@ const passport=require("passport");
 const JWTStrategy=require("passport-jwt").Strategy; 
 const {ExtractJwt}=require("passport-jwt");
 const GoogleStrategy=require("passport-google-oauth20").Strategy;
-const profileid="";
+let usermail;
 
 const check=validation.body;
 const validateResult= validation.validationResult;
@@ -32,14 +32,20 @@ passport.use(new JWTStrategy({
     callbackURL: "http://localhost:3000/auth/google/callback"
   },
   function(accessToken, refreshToken, profile, cb) {
+        let usermail= profile.emails[0].value;
+    
+        console.log(profile);
+        user.findOne({email:usermail},(err,reslt)=>{
+            if(reslt){
+                return cb(null, user);
+            }else{
+                return cb(null,false );
+            }
+        })
    
-    console.log("lll");
-    User.findOne({ email: profile.email }, function (err, user) {
-        if(user)
-      return cb(err, user);
-      else
-        return cb(new Error("Invalid user",null));
-    });
+      
+      
+   
   }
 ));
   
@@ -101,9 +107,6 @@ router.post("/signup", [
         }
     }
 
-    
-
-
 
 
 ]);
@@ -151,19 +154,16 @@ router.post("/signin" ,[
     
     }
 ])
-router.get('/google',passport.authenticate('google', { scope: ['profile'] }))
+router.get('/google',passport.authenticate('google', { scope: ['email'] }));
 
 
 
-router.get("/google/callback",(req,res,next)=>{
-console.log("sdf");
-passport.authenticate('google', { failureRedirect: '/' }),
-async (req,res)=>{
+router.get("/google/callback",passport.authenticate('google', { session:false }), (req,res)=>{
     const payload={
-        sub:u.id,
+        sub:usermail,
         iat:Date.now()
     }
-    const token=  await jwt.sign(payload,process.env.SECRET_KEY,{expiresIn: "2h",});
+    const token=   jwt.sign(payload,process.env.SECRET_KEY,{expiresIn: "2h",});
     // res.setHeader("Set-Cookie",cookie.serialize('access-token',token,{
     //     // httpOnly:true // disable for testing
     //     sameSite:'strict',
@@ -171,10 +171,10 @@ async (req,res)=>{
     // })) //vulnulrable 
     return res.status(200).send({
         message:"Successfully Login",
-        user:u.username,
+        user:usermail,
         token
     })
 }
-})
+)
 
 module.exports=router;
