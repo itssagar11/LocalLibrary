@@ -5,7 +5,7 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var mongoose= require("mongoose");
-const mongoDB="mongodb+srv://itssagar11:0135india@cluster0.4yxhpzs.mongodb.net/library?retryWrites=true&w=majority://localhost:27017/mongodb+srv://itssagar11:0135Indi@@cluster0.mdd4cvd.mongodb.net/?libraryretryWrites=true";
+const mongoDB=process.env.MONGODB_URL||"mongodb+srv://itssagar11:0135india@cluster0.4yxhpzs.mongodb.net/library?retryWrites=true&w=majority://localhost:27017/mongodb+srv://itssagar11:0135Indi@@cluster0.mdd4cvd.mongodb.net/?libraryretryWrites=true";
 const passport=require("passport");
 const JWTStrategy=require("passport-jwt").Strategy; 
 const {ExtractJwt}=require("passport-jwt");
