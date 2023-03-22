@@ -1,5 +1,8 @@
 
 import Login from "./login"
+
+import Header from "./headerLogin"
 export {
-    Login
+    Login,
+    Header
 }

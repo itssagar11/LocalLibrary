@@ -18,3 +18,4 @@ const loginField=[ {
     isRequired:true,
     placeholder:"Password"   
 }]
+export {loginField}

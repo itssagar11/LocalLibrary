@@ -42,10 +42,6 @@ passport.use(new JWTStrategy({
                 return cb(null,false );
             }
         })
-   
-      
-      
-   
   }
 ));
   
